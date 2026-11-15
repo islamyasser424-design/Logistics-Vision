@@ -383,7 +383,7 @@ The pipeline auto-scans the source directories and dynamically validates schema 
 ### 2. Delivery Telematics & Resolving the Flawed `on_time_flag`
 In raw transportation telematics, legacy systems often record inaccurate punctuality booleans due to uncoordinated dispatch time zones. The pipeline audits every shipment by computing the true time differential:
 
-$$\text{delay\_minutes} = \frac{\text{actual\_datetime} - \text{scheduled\_datetime}}{60\text{ seconds}}$$
+$$\text{Delay Minutes} = \frac{\text{Actual Datetime} - \text{Scheduled Datetime}}{60 \text{ seconds}}$$
 
 ```python
 # Datetime conversion with strict error coercion
@@ -411,7 +411,7 @@ delivery_events.drop(columns=['on_time_flag'], inplace=True)
 ### 3. Driver Demographics & Legal Labor Compliance Audit
 To enforce operational compliance and data cleanlines, driver records are standardized by trimming whitespace, title-casing personal names into a unified `full_name`, and auditing career inception age against federal commercial driving regulations:
 
-$$\text{age\_at\_career\_start} = \frac{\text{reference\_date} - \text{date\_of\_birth}}{365.25} - \text{years\_experience}$$
+$$\text{Age at Career Start} = \frac{\text{Reference Date} - \text{Date of Birth}}{365.25} - \text{Years of Experience}$$
 
 ```python
 # Unify driver naming
