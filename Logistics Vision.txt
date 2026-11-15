@@ -1,0 +1,115 @@
+USE Logistics;
+GO
+
+/* Q1 (Company Overview): How many completed loads, total revenue, miles, and OTD % do we have? */
+SELECT
+    COUNT(DISTINCT l.load_id) AS Total_Loads,
+    ROUND(SUM(l.revenue + l.fuel_surcharge + l.accessorial_charges) / 1000000.0, 2) AS Total_Revenue_M
+FROM dbo.loads l;
+
+SELECT
+    ROUND(100.0 * SUM(CASE WHEN correct_on_time_flag = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS OTD_Pct
+FROM dbo.delivery_events
+WHERE event_type = 'Delivery';
+GO
+
+/* Q2 (Company Overview & Customers): Who are the Top 5 Customers by Total Revenue? */
+SELECT TOP 5
+    c.customer_name,
+    COUNT(l.load_id) AS Total_Loads,
+    ROUND(SUM(l.revenue + l.fuel_surcharge + l.accessorial_charges), 2) AS Total_Revenue
+FROM dbo.customers c
+INNER JOIN dbo.loads l ON c.customer_id = l.customer_id
+GROUP BY c.customer_name
+ORDER BY Total_Revenue DESC;
+GO
+
+/* Q3 (Customers Performance): How does revenue split between Refrigerated and Dry Van loads? */
+SELECT
+    l.load_type,
+    COUNT(l.load_id) AS Total_Loads,
+    ROUND(SUM(l.revenue + l.fuel_surcharge + l.accessorial_charges) / 1000000.0, 2) AS Total_Revenue_M
+FROM dbo.loads l
+GROUP BY l.load_type
+ORDER BY Total_Revenue_M DESC;
+GO
+
+/* Q4 (Customers Churn Audit): What is the revenue split between Active (168) and Inactive (32) accounts? */
+SELECT
+    c.account_status,
+    COUNT(DISTINCT c.customer_id) AS Customer_Count,
+    COUNT(l.load_id) AS Total_Loads,
+    ROUND(SUM(l.revenue + l.fuel_surcharge + l.accessorial_charges), 2) AS Total_Revenue
+FROM dbo.customers c
+INNER JOIN dbo.loads l ON c.customer_id = l.customer_id
+GROUP BY c.account_status;
+GO
+
+/* Q5 (Operations): Which Top 10 Facilities suffer the highest Delivery Detention Hours? */
+SELECT TOP 10
+    f.facility_name,
+    f.city,
+    f.state,
+    ROUND(SUM(CAST(d.detention_minutes AS FLOAT)) / 60.0, 2) AS Total_Detention_Hours,
+    ROUND(AVG(CAST(d.detention_minutes AS FLOAT)), 2) AS Avg_Detention_Minutes
+FROM dbo.delivery_events d
+INNER JOIN dbo.facilities f ON d.facility_id = f.facility_id
+WHERE d.event_type = 'Delivery'
+GROUP BY f.facility_name, f.city, f.state
+ORDER BY Total_Detention_Hours DESC;
+GO
+
+/* Q6 (Cost & Profitability): What is our Maintenance Spend across all 10 service descriptions? */
+SELECT
+    service_description,
+    COUNT(*) AS Service_Events,
+    ROUND(SUM(total_cost), 2) AS Total_Maintenance_Cost
+FROM dbo.maintenance_records
+GROUP BY service_description
+ORDER BY Total_Maintenance_Cost DESC;
+GO
+
+/* Q7 (Driver Performance): Who are the Top 10 Drivers by On-Time Deliveries? */
+SELECT TOP 10
+    dr.full_name,
+    COUNT(*) AS On_Time_Deliveries
+FROM dbo.delivery_events d
+INNER JOIN dbo.trips t ON d.trip_id = t.trip_id
+INNER JOIN dbo.drivers dr ON t.driver_id = dr.driver_id
+WHERE d.event_type = 'Delivery'
+  AND d.correct_on_time_flag = 1
+GROUP BY dr.full_name
+ORDER BY On_Time_Deliveries DESC;
+GO
+
+/* Q8 (Vehicle Performance): What is our Fleet Status breakdown (Active / Maintenance / Inactive)? */
+SELECT
+    status AS Fleet_Status,
+    COUNT(*) AS Truck_Count
+FROM dbo.trucks
+GROUP BY status
+ORDER BY Truck_Count DESC;
+GO
+
+/* Q9 (Safety Overview): What are our total safety incidents, overlapping flags, and damage cost? */
+SELECT
+    COUNT(*) AS Total_Incidents,
+    SUM(CASE WHEN preventable_flag = 1 THEN 1 ELSE 0 END) AS Preventable_Cases,
+    SUM(CASE WHEN at_fault_flag = 1 THEN 1 ELSE 0 END) AS At_Fault_Cases,
+    SUM(CASE WHEN injury_flag = 1 THEN 1 ELSE 0 END) AS Injury_Cases,
+    ROUND(SUM(cargo_damage_cost + claim_amount), 2) AS Total_Damage_Cost
+FROM dbo.safety_incidents;
+GO
+
+/* Q10 (Safety Deep Dive): Who are the Top 5 Drivers in Preventable Incident Cost? */
+SELECT TOP 5
+    COALESCE(dr.full_name, s.driver_id) AS Driver_Name,
+    COUNT(*) AS Preventable_Cases,
+    ROUND(SUM(s.cargo_damage_cost + s.claim_amount), 2) AS Total_Preventable_Cost,
+    ROUND(AVG(s.cargo_damage_cost + s.claim_amount), 2) AS Avg_Cost_Per_Case
+FROM dbo.safety_incidents s
+LEFT JOIN dbo.drivers dr ON s.driver_id = dr.driver_id
+WHERE s.preventable_flag = 1
+GROUP BY COALESCE(dr.full_name, s.driver_id)
+ORDER BY Total_Preventable_Cost DESC;
+GO
