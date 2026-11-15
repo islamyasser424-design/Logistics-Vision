@@ -5,7 +5,7 @@
 [![Live Interactive Dashboard](https://img.shields.io/badge/Live_Dashboard-Power_BI_Service-F2C811?style=for-the-badge&logo=powerbi&logoColor=black)](https://app.powerbi.com/view?r=eyJrIjoiZTJlOWM5NzYtMDEyOC00NWY0LTlkZGUtZWI5NDZlMjUwYjdiIiwidCI6IjJiYjZlNWJjLWMxMDktNDdmYi05NDMzLWMxYzZmNGZhMzNmZiIsImMiOjl9)
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![SQL Server](https://img.shields.io/badge/Database-SQL_Server_%7C_T--SQL-CC292B?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server/)
-[![DAX Measures](https://img.shields.io/badge/DAX-187%2B_Formulated_Measures-0078D4?style=for-the-badge&logo=microsoft&logoColor=white)]()
+[![DAX Measures](https://img.shields.io/badge/DAX-62_Formulated_Measures-0078D4?style=for-the-badge&logo=microsoft&logoColor=white)]()
 [![Data Model](https://img.shields.io/badge/Data_Model-Enterprise_Star_Schema-8b5cf6?style=for-the-badge)]()
 [![Scale](https://img.shields.io/badge/Scale-%24298.6M_Revenue_%7C_85.4K_Loads-10b981?style=for-the-badge)]()
 [![Executive Deck](https://img.shields.io/badge/Deck-PPTX_%26_PDF_Available-E34F26?style=for-the-badge&logo=microsoftpowerpoint&logoColor=white)](#-project-deliverables--repository-structure)
@@ -37,6 +37,7 @@
   - [View 7: Vehicle & Fleet Telematics](#view-7-vehicle--fleet-telematics)
   - [View 8: Safety & Risk Incident Management](#view-8-safety--risk-incident-management)
   - [View 9: What-If Dynamic Financial Simulator](#view-9-what-if-dynamic-financial-simulator)
+- [Python ETL & Automated Data Engineering Pipeline](#-python-etl--automated-data-engineering-pipeline)
 - [SQL Engineering & Data Validation Pipeline](#-sql-engineering--data-validation-pipeline)
 - [DAX Calculations & Analytical Formulas](#-dax-calculations--analytical-formulas)
 - [Project Deliverables & Repository Structure](#-project-deliverables--repository-structure)
@@ -68,7 +69,7 @@ This repository represents the **mature, next-generation evolution** of the Logi
 | **Data Engineering & ETL** | Manual file loading directly into Power BI | **Automated Python & T-SQL Pipeline** (`Logistics Vision.ipynb`, `Logistics Vision.txt`) performing data type sanitization, datetime diff calculations, and foreign key integrity | Reproducible, production-ready data pipeline eliminating dirty records and negative age anomalies |
 | **Live Web Availability** | Static screenshots only | **Published Interactive Power BI Cloud Service** with cross-filtering, drill-through, and bookmarking | Immediate stakeholder accessibility without requiring local desktop installation |
 | **Design System & Theme** | Default standard colors | **Custom Enterprise Branded JSON Theme** (`Logistics Vision.json`) with corporate color scales, accessibility contrast, and semantic alerts | Unified, board-level visual aesthetics matching modern SaaS analytics |
-| **Model Size & Optimization** | 24.8 MB preliminary PBIX | **35.5 MB Comprehensive Production PBIX** with full 2022–2024 transactional depth, 187 DAX measures, and What-If parameters | Higher analytical fidelity, zero aggregation approximations, and full historical coverage |
+| **Model Size & Optimization** | 24.8 MB preliminary PBIX | **35.5 MB Comprehensive Production PBIX** with full 2022–2024 transactional depth, 62 DAX measures, and What-If parameters | Higher analytical fidelity, zero aggregation approximations, and full historical coverage |
 | **Presentation Deliverables** | 7.7 MB slide deck | **High-Definition 22.5 MB Master Presentation** (`.pptx`) + Complete Vector PDF Export (`.pdf`) | Ready-to-deliver C-suite executive presentation deck |
 | **Documentation & Transparency** | High-level summary | **Exhaustive 9-Page Visual Audit** with 4K-rendered screenshots, parameter tables, and 10 production SQL verification queries | Complete data lineage and engineering transparency |
 
@@ -119,7 +120,7 @@ flowchart TD
     subgraph S3["Phase 3: Semantic Engine & Star Schema (Power BI)"]
         E1 --> F1["Power BI Enterprise PBIX (35.5 MB)"]
         F1 --> G1["Custom Brand JSON Theme<br/>Logistics Vision.json"]
-        F1 --> G2["187+ DAX Calculated Measures<br/>CALCULATE, DIVIDE, Time Intelligence, What-If"]
+        F1 --> G2["62 DAX Calculated Measures<br/>CALCULATE, DIVIDE, Time Intelligence, What-If"]
         F1 --> G3["Dynamic Parameter Sliders<br/>Fuel Price & Revenue Multiplier"]
     end
 
@@ -363,6 +364,132 @@ Each view in the suite addresses a distinct management objective, presenting act
 
 ---
 
+## 🐍 Python ETL & Automated Data Engineering Pipeline
+
+To transform messy raw telemetry logs, dispatch timestamps, and transactional feeds into an enterprise-ready analytical data model, the project implements an end-to-end automated **Python ETL & Data Engineering Pipeline**. Available as both an automated production script ([`Logistics_Vision_ETL.py`](Logistics_Vision_ETL.py)) and an interactive exploratory notebook ([`Logistics Vision.ipynb`](Logistics%20Vision.ipynb)), the pipeline executes **7 mission-critical engineering stages**:
+
+```mermaid
+flowchart LR
+    A["Raw Telematics CSVs<br/>(14 Datasets)"] --> B["Phase 1: Dynamic Ingestion<br/>Batch CSV Discovery"]
+    B --> C["Phase 2-6: Sanitization<br/>• Fix Flawed on_time_flag<br/>• Driver Age Compliance<br/>• 24/7 Facility Windows<br/>• Telematics Imputation"]
+    C --> D["Phase 7: SQLAlchemy Engine<br/>MSSQL + PyODBC"]
+    D --> E["Relational Database<br/>(16 Foreign Keys)"]
+    E --> F["Power BI Semantic Model<br/>(62 DAX Measures)"]
+```
+
+### 1. Ingestion & Dynamic Data Discovery
+The pipeline auto-scans the source directories and dynamically validates schema definitions across all **14 operational tables**: `customers`, `delivery_events`, `driver_monthly_metrics`, `drivers`, `facilities`, `fuel_purchases`, `loads`, `maintenance_records`, `routes`, `safety_incidents`, `trailers`, `trips`, `truck_utilization_metrics`, and `trucks`.
+
+### 2. Delivery Telematics & Resolving the Flawed `on_time_flag`
+In raw transportation telematics, legacy systems often record inaccurate punctuality booleans due to uncoordinated dispatch time zones. The pipeline audits every shipment by computing the true time differential:
+
+$$\text{delay\_minutes} = \frac{\text{actual\_datetime} - \text{scheduled\_datetime}}{60\text{ seconds}}$$
+
+```python
+# Datetime conversion with strict error coercion
+date_cols = ['scheduled_datetime', 'actual_datetime']
+for col in date_cols:
+    delivery_events[col] = pd.to_datetime(delivery_events[col], errors='coerce')
+
+# Calculate exact delay duration and floor early arrivals at 0 minutes
+delivery_events["delay_minutes"] = (
+    delivery_events["actual_datetime"] - delivery_events["scheduled_datetime"]
+).dt.total_seconds() / 60.0
+delivery_events["delay_minutes_clean"] = delivery_events["delay_minutes"].apply(lambda x: max(0.0, x))
+
+# Engineer audited, true on-time compliance flag
+delivery_events["correct_on_time_flag"] = (
+    delivery_events["actual_datetime"] <= delivery_events["scheduled_datetime"]
+).astype(int)
+
+# Detect and log classification discrepancies before dropping flawed legacy column
+mismatched_rows = delivery_events[delivery_events["on_time_flag"] != delivery_events["correct_on_time_flag"]]
+print(f"Total legacy on_time_flag discrepancies resolved: {len(mismatched_rows):,}")
+delivery_events.drop(columns=['on_time_flag'], inplace=True)
+```
+
+### 3. Driver Demographics & Legal Labor Compliance Audit
+To enforce operational compliance and data cleanlines, driver records are standardized by trimming whitespace, title-casing personal names into a unified `full_name`, and auditing career inception age against federal commercial driving regulations:
+
+$$\text{age\_at\_career\_start} = \frac{\text{reference\_date} - \text{date\_of\_birth}}{365.25} - \text{years\_experience}$$
+
+```python
+# Unify driver naming
+drivers['first_name'] = drivers['first_name'].astype(str).str.strip().str.title()
+drivers['last_name'] = drivers['last_name'].astype(str).str.strip().str.title()
+drivers['full_name'] = drivers['first_name'] + ' ' + drivers['last_name']
+drivers.drop(columns=['first_name', 'last_name'], inplace=True, errors='ignore')
+
+# Datetime normalization
+for col in ['hire_date', 'termination_date', 'date_of_birth']:
+    drivers[col] = pd.to_datetime(drivers[col], errors='coerce')
+
+# Audit legal career start age (must be >= 18 years)
+drivers['age_at_career_start'] = (
+    pd.to_datetime('2024-12-31') - drivers['date_of_birth']
+).dt.days / 365.25 - drivers['years_experience']
+
+invalid_drivers = drivers[drivers['age_at_career_start'] < 18]
+print(f"Compliance Alert: Identified {len(invalid_drivers)} driver records requiring HR verification.")
+```
+
+### 4. Facility Operating Windows & 24/7 Schedule Parsing
+Facilities with continuous receiving schedules require specialized handling compared to restricted-hour distribution centers:
+
+```python
+# Flag continuous 24/7 distribution hubs
+facilities['is_24_7'] = facilities['operating_hours'].str.contains('24/7', case=False, na=False).astype(int)
+
+# Decompose operating shift windows for route planning
+time_split = facilities['operating_hours'].str.split('-', expand=True)
+if time_split.shape[1] >= 2:
+    facilities['open_time'] = time_split[0].str.strip()
+    facilities['close_time'] = time_split[1].str.strip()
+```
+
+### 5. Telematics Imputation & Referential Key Protection
+In real-world fleet telemetry, unmapped equipment or relief drivers can result in missing foreign keys in event tables (`fuel_purchases`, `safety_incidents`, `trips`). The pipeline prevents orphaned records during database ingestion by imputing standard `'unknown'` placeholder keys:
+
+```python
+target_keys = ['truck_id', 'driver_id']
+fuel_purchases[target_keys] = fuel_purchases[target_keys].fillna('unknown')
+safety_incidents[target_keys] = safety_incidents[target_keys].fillna('unknown')
+trips[['driver_id', 'truck_id', 'trailer_id']] = trips[['driver_id', 'truck_id', 'trailer_id']].fillna('unknown')
+```
+
+### 6. Automated SQL Server Loading & 16-Relationship Relational Modeling
+Using **SQLAlchemy** and **PyODBC**, the cleaned DataFrames are ingested into Microsoft SQL Server (`Logistics` database). The script then executes automated DDL queries to create clustered Primary Keys, harmonize data types on metric tables, and enforce **16 Star/Snowflake foreign key relationships**:
+
+```python
+from sqlalchemy import create_engine, text
+
+# Initialize optimized SQL Server connection
+engine = create_engine(
+    f"mssql+pyodbc://@{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes",
+    fast_executemany=True
+)
+
+# Bulk load cleaned DataFrames
+for table_name, df in cleaned_tables.items():
+    df.to_sql(table_name, con=engine, if_exists='replace', index=False, chunksize=2000)
+
+# Execute automated relational modeling DDL (Primary & Foreign Keys)
+with engine.begin() as conn:
+    conn.execute(text(ddl_relational_constraints_script))
+
+# Automated verification of 16 schema relationships
+check_sql = """
+SELECT fk.name AS [Foreign_Key], tp.name AS [Fact_Table], tr.name AS [Dim_Table]
+FROM sys.foreign_keys fk
+INNER JOIN sys.tables tp ON fk.parent_object_id = tp.object_id
+INNER JOIN sys.tables tr ON fk.referenced_object_id = tr.object_id;
+"""
+df_relations = pd.read_sql(check_sql, engine)
+print(f"✅ Schema Modeling Complete: {len(df_relations)} Active Relational Constraints Enforced.")
+```
+
+---
+
 ## 🛠️ SQL Engineering & Data Validation Pipeline
 
 The platform includes 10 production T-SQL verification scripts located in `Logistics Vision.txt` that execute against the relational `Logistics` database to ensure data integrity:
@@ -485,9 +612,10 @@ Logistics-Vision/
 ├── .gitignore                      # Standard Power BI, Python & OS ignore rules
 ├── LICENSE                         # MIT Open Source License (2026 Islam Yasser)
 ├── README.md                       # Comprehensive bilingual master documentation
-├── Logistics Vision.pbix           # Primary Power BI Desktop file (35.5 MB, 187 DAX measures)
+├── Logistics Vision.pbix           # Primary Power BI Desktop file (35.5 MB, 62 DAX measures)
 ├── Logistics Vision.pdf            # High-resolution vector export of all 9 dashboard views (21.1 MB)
 ├── Logistics Vision.pptx           # Complete C-Suite executive presentation deck (22.5 MB)
+├── Logistics_Vision_ETL.py         # Production Python ETL script (automated cleaning, validation & SQL ingestion)
 ├── Logistics Vision.ipynb          # Python ETL cleaning, validation & SQL pipeline (120 KB)
 ├── Logistics Vision.json           # Power BI enterprise custom theme & palette (39 KB)
 ├── Logistics Vision.txt            # Production T-SQL validation scripts (4 KB)
@@ -534,11 +662,18 @@ Explore the fully interactive, cross-filterable dashboard directly in your brows
 ---
 
 ### التطويرات والتحسينات الجذرية في هذا الإصدار المتقدم:
-1. **أتمتة خط معالجة وتنظيف البيانات (Python & SQL):** تم تضمين دفتر العمل `Logistics Vision.ipynb` وكود استعلامات قاعدة البيانات `Logistics Vision.txt` لبناء العلاقات وتنظيف الفروق الزمنية واحتساب فترات التأخير بدقة برمجية كاملة.
-2. **إتاحة الداشبورد التفاعلي المباشر (Power BI Service):** ربط المنصة مباشرة بالنسخة السحابية الحية التي تتيح لأي متصفح أو مسؤول توظيف تجربة التصفية والحسابات فورياً بدون الحاجة لتثبيت برامج.
-3. **هوية بصرية معتمدة (Custom JSON Theme):** تطبيق ملف السمات المؤسسي `Logistics Vision.json` لضمان تناسق الألوان والمقاييس ومطابقتها لمعايير التباين العالمية.
-4. **نموذج بيانات مطور (35.5 MB PBIX):** رفع النموذج الأحدث الذي يضم 187 مقياساً تحليلياً باستخدام DAX، ونموذج نجمي متطور يربط 14 جدولاً.
-5. **شرح وتوثيق الشاشات التسع بصور فائقة الدقة (4K):** استخراج صور صفحات الـ PDF بالكامل وشرح الدلالات الاقتصادية والتشغيلية لكل شاشة.
+1. **أتمتة خط هندسة ومعالجة البيانات المتكامل بالبايثون (Python ETL Pipeline):**
+   - تم بناء كود بايثون مستقل للإنتاج ([`Logistics_Vision_ETL.py`](Logistics_Vision_ETL.py)) ودفتر استكشافي كامل ([`Logistics Vision.ipynb`](Logistics%20Vision.ipynb)).
+   - **تصحيح مؤشر الالتزام بالمواعيد:** كشف الخطأ الجوهري في عمود `on_time_flag` القديم واحتساب الفرق الزمني الحقيقي بالدقائق (`delay_minutes = (actual - scheduled) / 60`) وتصفير القيم السالبة للأوقات المبكرة وإنشاء الحقل الدقيق `correct_on_time_flag`.
+   - **تدقيق الامتثال العمالي والقانوني:** احتساب سن السائقين عند بداية مسيرتهم المهنية وكشف الحالات الشاذة هندسياً (`age_at_career_start < 18`).
+   - **تصنيف مراكز التوزيع والمستودعات:** استخلاص المستودعات التي تعمل على مدار الساعة طوال أيام الأسبوع (`is_24_7`) وفصل فترات الدوام الصباحية والمسائية.
+   - **معالجة القيم المفقودة (Data Imputation):** استبدال القيم الفارغة في المفاتيح الأجنبية لقواعد التيليماتكس والوقود والحوادث بقيمة `'unknown'` لضمان سلامة الربط العلائقي.
+   - **الربط الآلي بقاعدة البيانات:** الرفع التلقائي للجداول الـ 14 باستخدام مكتبة `SQLAlchemy` و `PyODBC` وتطبيق أوامر DDL لإنشاء المفاتيح الأساسية و **16 علاقة أجنبية متكاملة (Star / Snowflake Schema)** والتأكد برمجياً من سلامتها.
+2. **استعلامات الفحص والتحليل بقواعد البيانات (T-SQL):** توفير ملف الاستعلامات الشامل ([`Logistics Vision.txt`](Logistics%20Vision.txt)) المكون من 10 استعلامات تدقيق تشغيلية ومالية.
+3. **إتاحة الداشبورد التفاعلي المباشر (Power BI Service):** ربط المنصة مباشرة بالنسخة السحابية الحية التي تتيح لأي متصفح أو مسؤول توظيف تجربة التصفية والحسابات فورياً بدون الحاجة لتثبيت برامج.
+4. **هوية بصرية معتمدة (Custom JSON Theme):** تطبيق ملف السمات المؤسسي `Logistics Vision.json` لضمان تناسق الألوان والمقاييس ومطابقتها لمعايير التباين العالمية.
+5. **نموذج بيانات مطور (35.5 MB PBIX):** رفع النموذج الأحدث الذي يضم 62 مقياساً تحليلياً باستخدام DAX، ونموذج نجمي متطور يربط 14 جدولاً.
+6. **شرح وتوثيق الشاشات التسع بصور فائقة الدقة (4K):** استخراج صور صفحات الـ PDF بالكامل وشرح الدلالات الاقتصادية والتشغيلية لكل شاشة.
 
 ---
 
